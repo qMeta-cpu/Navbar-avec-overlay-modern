@@ -1,0 +1,214 @@
+/**
+ * JS à ajouté a custom UNCODE
+ * Compatible avec vos classes : menu-mobile-open, vmenu-offcanvas-overlay, off-opened
+ * À ajouter dans Uncode > Custom Code > JS
+ */
+
+(function($) {
+    'use strict';
+    
+    // Configuration
+    const CONFIG = {
+        // Classes Uncode détectées dans votre CSS
+        openClassDesktop: 'off-opened',
+        openClassMobile: 'menu-mobile-open',
+        overlayClass: 'vmenu-offcanvas-overlay',
+        
+        // Classe custom pour la fermeture
+        closingClassDesktop: 'off-closing',
+        closingClassMobile: 'menu-mobile-closing',
+        
+        // Durée de l'animation (ajuster selon Uncode)
+        animationDuration: 500,
+    };
+    
+    let isClosing = false;
+    let closeTimeout = null;
+    
+    /**
+     * Détecte quand le menu commence à se fermer
+     */
+    function handleMenuClose(isDesktop) {
+        const $body = $('body');
+        
+        // Si déjà en cours de fermeture, ignorer
+        if (isClosing) return;
+        
+        // Ajouter la classe de fermeture appropriée
+        isClosing = true;
+        
+        if (isDesktop) {
+            $body.addClass(CONFIG.closingClassDesktop);
+        } else {
+            $body.addClass(CONFIG.closingClassMobile);
+        }
+        
+        // Retirer la classe après l'animation
+        if (closeTimeout) clearTimeout(closeTimeout);
+        
+        closeTimeout = setTimeout(function() {
+            $body.removeClass(CONFIG.closingClassDesktop + ' ' + CONFIG.closingClassMobile);
+            isClosing = false;
+        }, CONFIG.animationDuration);
+    }
+    
+    /**
+     * Détecte quand le menu s'ouvre (annuler la fermeture si en cours)
+     */
+    function handleMenuOpen() {
+        if (closeTimeout) {
+            clearTimeout(closeTimeout);
+            closeTimeout = null;
+        }
+        isClosing = false;
+        $('body').removeClass(CONFIG.closingClassDesktop + ' ' + CONFIG.closingClassMobile);
+    }
+    
+    /**
+     * Observer les changements de classe sur le body avec MutationObserver
+     */
+    function initObserver() {
+        const targetNode = document.body;
+        const config = { 
+            attributes: true, 
+            attributeFilter: ['class'],
+            attributeOldValue: true 
+        };
+        
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const oldClasses = mutation.oldValue || '';
+                    const newClasses = targetNode.className;
+                    
+                    // Détecter l'ouverture/fermeture desktop
+                    const wasOpenDesktop = oldClasses.includes(CONFIG.openClassDesktop);
+                    const isOpenDesktop = newClasses.includes(CONFIG.openClassDesktop);
+                    
+                    // Détecter l'ouverture/fermeture mobile
+                    const wasOpenMobile = oldClasses.includes(CONFIG.openClassMobile);
+                    const isOpenMobile = newClasses.includes(CONFIG.openClassMobile);
+                    
+                    // Si passage de fermé à ouvert (desktop ou mobile)
+                    if ((!wasOpenDesktop && isOpenDesktop) || (!wasOpenMobile && isOpenMobile)) {
+                        handleMenuOpen();
+                    }
+                    
+                    // Si passage d'ouvert à fermé (desktop)
+                    if (wasOpenDesktop && !isOpenDesktop) {
+                        handleMenuClose(true);
+                    }
+                    
+                    // Si passage d'ouvert à fermé (mobile)
+                    if (wasOpenMobile && !isOpenMobile) {
+                        handleMenuClose(false);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(targetNode, config);
+    }
+    
+    /**
+     * Méthode alternative : écouter les clics sur les boutons de fermeture
+     */
+    function initClickListeners() {
+        // Bouton hamburger / close
+        $(document).on('click', '.mobile-menu-button, .mmenu-close, .menu-close-search, .close-menu', function() {
+            const $body = $('body');
+            
+            // Déterminer si c'est desktop ou mobile
+            const isDesktop = $body.hasClass(CONFIG.openClassDesktop);
+            
+            // Si le menu est ouvert, c'est une fermeture
+            if ($body.hasClass(CONFIG.openClassMobile) || isDesktop) {
+                handleMenuClose(isDesktop);
+            }
+        });
+        
+        // Clic sur l'overlay (si Uncode ferme le menu)
+        $(document).on('click', '.vmenu-overlay, .off-canvas-overlay, .vmenu-offcanvas-overlay', function() {
+            const $body = $('body');
+            const isDesktop = $body.hasClass(CONFIG.openClassDesktop);
+            handleMenuClose(isDesktop);
+        });
+        
+        // Liens du menu qui ferment le menu
+        $(document).on('click', '.menu-primary a, .vmenu-container a', function(e) {
+            const $body = $('body');
+            const href = $(this).attr('href');
+            const isDesktop = $body.hasClass(CONFIG.openClassDesktop);
+            
+            // Si c'est un lien interne (ancre ou page), le menu va se fermer
+            if (href && (href.startsWith('#') || href.startsWith('/'))) {
+                if ($body.hasClass(CONFIG.openClassMobile) || isDesktop) {
+                    handleMenuClose(isDesktop);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Initialisation au chargement du DOM
+     */
+    function init() {
+        // Attendre que le DOM soit prêt
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initObserver();
+                initClickListeners();
+            });
+        } else {
+            initObserver();
+            initClickListeners();
+        }
+        
+        console.log('✓ Fix menu off-canvas Uncode initialisé');
+    }
+    
+    // Lancer l'initialisation
+    init();
+    
+})(jQuery);
+
+
+/**
+ * CSS COMPLEMENTAIRE (à ajouter dans Uncode > Custom Code > CSS si pas déjà fait)
+ * 
+ * Ce CSS garantit que le blur reste pendant la fermeture
+ */
+
+/*
+@media (min-width: 960px) {
+  // Pour desktop (vmenu vertical)
+  body.vmenu-offcanvas-overlay.off-opened .masthead-vertical .vmenu-container,
+  body.vmenu-offcanvas-overlay.menu-mobile-closing .masthead-vertical .vmenu-container {
+    background: rgba(180, 180, 190, 0.30) !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    transition: backdrop-filter 0.4s ease, background 0.4s ease, transform 0.4s ease;
+  }
+  
+  // Overlay sombre pendant ouverture ET fermeture
+  body.vmenu-offcanvas-overlay.off-opened::after,
+  body.vmenu-offcanvas-overlay.menu-mobile-closing::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.10);
+    pointer-events: none;
+    z-index: 200;
+    transition: opacity 0.4s ease;
+  }
+}
+
+// Pour mobile
+body.menu-mobile-open .menu-row-wrapper,
+body.menu-mobile-closing .menu-row-wrapper {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: rgba(128, 128, 128, 0.30);
+  transition: backdrop-filter 0.4s ease, background 0.4s ease, transform 0.4s ease;
+}
+*/
