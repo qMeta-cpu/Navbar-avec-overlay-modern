@@ -1,0 +1,73 @@
+/* CODE A AJOUER A CUSTOM UNCODE */
+
+@media (min-width: 960px) {
+
+  /* Fond gris argenté + blur */
+  body.vmenu-offcanvas-overlay.off-opened .masthead-vertical .vmenu-container {
+    /* gris argenté translucide */
+    background: rgba(180, 180, 190, 0.30) !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  /* Texte blanc */
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container,
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container a,
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container .menu-primary-inner > li > a,
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container .uncode-menu-additional-text,
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container .vmenu-footer {
+    color: #ffffff !important;
+  }
+  /* === Overlay sombre derrière le off-canvas (sans rien modifier du natif) === */
+body.vmenu-offcanvas-overlay.off-opened::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.10); /* 10% */
+  pointer-events: none; /* ne bloque jamais les clics */
+  z-index: 200; /* sous le off-canvas, au-dessus du site */
+}
+
+
+  /* Icônes sociales blanches */
+  body.vmenu-offcanvas-overlay.off-opened .vmenu-container .menu-social i {
+    color: #ffffff !important;
+  }
+}
+
+
+/* état ouvert normal */
+body.menu-mobile-open .menu-row-wrapper {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: rgba(128, 128, 128, 0.30);
+  transition: backdrop-filter 0.4s ease, background 0.4s ease;
+}
+
+/* AJOUTEZ CE CSS à votre CSS existant */
+
+@media (min-width: 960px) {
+  /* Garder le blur pendant la FERMETURE du menu desktop */
+  body.vmenu-offcanvas-overlay.off-closing .masthead-vertical .vmenu-container {
+    background: rgba(180, 180, 190, 0.30) !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+  
+  /* Overlay sombre pendant la fermeture */
+  body.vmenu-offcanvas-overlay.off-closing::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.10);
+    pointer-events: none;
+    z-index: 200;
+  }
+  
+  /* Texte blanc pendant la fermeture */
+  body.vmenu-offcanvas-overlay.off-closing .vmenu-container,
+  body.vmenu-offcanvas-overlay.off-closing .vmenu-container a,
+  body.vmenu-offcanvas-overlay.off-closing .vmenu-container .menu-primary-inner > li > a {
+    color: #ffffff !important;
+  }
+}
